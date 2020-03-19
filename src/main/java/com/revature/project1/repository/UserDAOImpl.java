@@ -47,6 +47,26 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
+    public boolean verifyPassword(String userName, String password) {
+        String sql = "SELECT ERS_PASSWORD FROM ERS_USERS WHERE ERS_USERNAME = ?";
+        int counter = 0;
+        try (Connection con = ConnectionUtility.getConnection()) {
+            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt.setString(1, userName);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                if (password.equals(rs.getString("ERS_PASSWORD")))
+                    counter++;
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        if (counter > 0 )
+            return true;
+        return false;
+    }
+
+    @Override
     public boolean checkUsername(String userName) {
         return false;
     }
