@@ -5,8 +5,6 @@ import com.revature.project1.model.ReimbursementStatus;
 import com.revature.project1.model.ReimbursementType;
 import com.revature.project1.model.User;
 import com.revature.project1.utility.ConnectionUtility;
-import com.sun.org.apache.regexp.internal.RE;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +73,7 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
     }
 
     @Override
-    public void createReimbursement(Reimbursement reimbursement) {
+    public boolean createReimbursement(Reimbursement reimbursement) {
         String sql = "INSERT INTO ERS_REIMBURSEMENT(REIMB_AMOUNT, REIMB_SUBMITTED, REIMB_DESCRIPTION, REIMB_AUTHOR, " +
                 "REIMB_TYPE_ID, REIMB_STATUS_ID) VALUES(?, CURRENT_TIMESTAMP, ?, ?, ?, " +
                 "(SELECT REIMB_STATUS_ID FROM ERS_REIMBURSEMENT_STATUS WHERE REIMB_STATUS = 'Pending'))";
@@ -85,11 +83,13 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
             stmt.setString(2, reimbursement.getDescription());
             stmt.setInt(3, reimbursement.getSubmitter().getUserId());
             stmt.setInt(4, reimbursement.getType().getId());
-            int res = stmt.executeUpdate();
-            Logger.getGlobal().log(Level.INFO, "ReimbursementDAOImpl.createReimbursement: executeUpdate returned ".concat(String.valueOf(res)));
+            if(stmt.executeUpdate() > 0) {
+                return true;
+            }
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
+        return false;
     }
 
     @Override

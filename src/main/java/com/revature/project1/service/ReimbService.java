@@ -3,32 +3,27 @@ package com.revature.project1.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.revature.project1.model.Reimbursement;
-import com.revature.project1.model.ReimbursementStatus;
-import com.revature.project1.model.ReimbursementType;
+import com.revature.project1.repository.ReimbursementDAO;
 import com.revature.project1.repository.ReimbursementDAOImpl;
 
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ReimbService {
-    private static ReimbService instance = null;
-    private List<ReimbursementType> typeList = null;
-    private List<ReimbursementStatus> statusList = null;
+    private ReimbursementDAO repository;
+    private ObjectMapper mapper;
 
-    private ReimbService() {
+    public ReimbService() {
         super();
-        ReimbursementDAOImpl reimbursementDAO = new ReimbursementDAOImpl();
-        typeList = reimbursementDAO.getAllTypes();
-        statusList = reimbursementDAO.getAllStatus();
+        this.repository = new ReimbursementDAOImpl();
+        this.mapper = new ObjectMapper();
     }
 
-    public static ReimbService getInstance() {
-        if (instance == null) {
-            instance = new ReimbService();
-        }
-        return instance;
+    public ReimbService(ReimbursementDAO repository) {
+        super();
+        this.repository = repository;
+        this.mapper = new ObjectMapper();
     }
 
     public String processGet(String[] uri, Map<String, String[]> params) throws JsonProcessingException {
@@ -51,13 +46,12 @@ public class ReimbService {
 
     public int processPost(String[] uri, Map<String, String[]> params, String json) throws JsonProcessingException {
         int returnCode = -1;
-        ObjectMapper mapper = new ObjectMapper();
-        ReimbursementDAOImpl reimbursementDAO = new ReimbursementDAOImpl();
         if (uri.length == 1) {
             if (!(json.equals(""))) {
                 Reimbursement reimb = mapper.readValue(json, Reimbursement.class);
-                reimbursementDAO.createReimbursement(reimb);
-                returnCode = 200;
+                 if (repository.createReimbursement(reimb)) {
+                     returnCode = 200;
+                 }
             }
         }
         return returnCode;
@@ -65,12 +59,10 @@ public class ReimbService {
 
     public int processPut(String[] uri, Map<String, String[]> params, String json) throws JsonProcessingException {
         int returnCode = -1;
-        ObjectMapper om = new ObjectMapper();
-        ReimbursementDAOImpl reimbursementDAO = new ReimbursementDAOImpl();
         if (uri.length == 1) {
             if (!(json.equals(""))) {
-                Reimbursement reimb = om.readValue(json, Reimbursement.class);
-                if(reimbursementDAO.updateChange(reimb))
+                Reimbursement reimb = mapper.readValue(json, Reimbursement.class);
+                if(repository.updateChange(reimb))
                     returnCode = 200;
             }
         }
@@ -78,26 +70,19 @@ public class ReimbService {
     }
 
     private String getAllTypes() throws JsonProcessingException {
-        ObjectMapper om = new ObjectMapper();
-        return om.writeValueAsString(typeList);
+        return mapper.writeValueAsString(repository.getAllTypes());
+    }
+
+    private String getAllStatus() throws JsonProcessingException {
+        return mapper.writeValueAsString(repository.getAllStatus());
     }
 
     private String getAllByUserId(int i) throws JsonProcessingException {
         Logger.getGlobal().log(Level.INFO, "Entering ReimbService.getAllByUserBytes()");
-        ObjectMapper om = new ObjectMapper();
-        ReimbursementDAOImpl reimbursementDAO = new ReimbursementDAOImpl();
-        return om.writeValueAsString(reimbursementDAO.getAllByUserId(i));
+        return mapper.writeValueAsString(repository.getAllByUserId(i));
     }
 
     private String getAll() throws JsonProcessingException {
-        ObjectMapper om = new ObjectMapper();
-        ReimbursementDAOImpl reimbursementDAO = new ReimbursementDAOImpl();
-        return om.writeValueAsString(reimbursementDAO.getAll());
+        return mapper.writeValueAsString(repository.getAll());
     }
-
-    private String getAllStatus() throws JsonProcessingException {
-        ObjectMapper om = new ObjectMapper();
-        return om.writeValueAsString(statusList);
-    }
-
 }

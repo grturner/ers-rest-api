@@ -17,7 +17,7 @@ public interface ReimbursementDAO {
 
     public List<ReimbursementType> getAllTypes();
 
-    public void createReimbursement(Reimbursement reimbursement);
+    public boolean createReimbursement(Reimbursement reimbursement);
 
     public List<ReimbursementStatus> getAllStatus();
 

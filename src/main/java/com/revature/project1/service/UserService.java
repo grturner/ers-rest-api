@@ -3,23 +3,26 @@ package com.revature.project1.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.revature.project1.model.User;
+import com.revature.project1.repository.UserDAO;
 import com.revature.project1.repository.UserDAOImpl;
-
-import java.util.List;
 import java.util.Map;
 
 public class UserService {
-    private static UserService instance = null;
+    private UserDAO repository;
+    private ObjectMapper mapper;
 
-    private UserService() {
+    public UserService() {
         super();
+        this.repository = new UserDAOImpl();
+        this.mapper = new ObjectMapper();
     }
 
-    public static UserService getInstance() {
-        if (instance == null)
-            instance = new UserService();
-        return instance;
+    public UserService(UserDAO repository) {
+        super();
+        this.repository = repository;
+        this.mapper = new ObjectMapper();
     }
+
 
     public String processGet(String[] uri, Map<String, String[]> params) throws JsonProcessingException {
         String response = null;
@@ -42,36 +45,29 @@ public class UserService {
 
     public int processPost(String[] uri, Map<String, String[]> params, String json) throws JsonProcessingException {
         int returnCode = -1;
-        ObjectMapper om = new ObjectMapper();
         if (uri.length == 1) {
             if (!((json.equals("")))){
-                User u = om.readValue(json, User.class);
-                UserDAOImpl userDAO = new UserDAOImpl();
-                userDAO.createUser(u);
-                returnCode = 200;
+                User u = mapper.readValue(json, User.class);
+                if(repository.createUser(u))
+                    returnCode = 200;
             }
         }
         return returnCode;
     }
 
     private String getAll() throws JsonProcessingException {
-        UserDAOImpl userDAO = new UserDAOImpl();
-        List<User> userList = userDAO.getAll();
-        return new ObjectMapper().writeValueAsString(userList);
+        return mapper.writeValueAsString(repository.getAll());
     }
 
     private String getById(int id) throws JsonProcessingException {
-        UserDAOImpl userDAO = new UserDAOImpl();
-        return new ObjectMapper().writeValueAsString(userDAO.getById(id));
+        return mapper.writeValueAsString(repository.getById(id));
     }
 
     private String getByUsername(String name) throws JsonProcessingException {
-        UserDAOImpl userDAO = new UserDAOImpl();
-        return new ObjectMapper().writeValueAsString(userDAO.getUser(name));
+        return mapper.writeValueAsString(repository.getUser(name));
     }
 
     private String verifyLogin(String userName, String password) throws JsonProcessingException {
-        UserDAOImpl userDAO = new UserDAOImpl();
-        return new ObjectMapper().writeValueAsString(userDAO.verifyPassword(userName, password));
+        return mapper.writeValueAsString(repository.verifyPassword(userName, password));
     }
 }

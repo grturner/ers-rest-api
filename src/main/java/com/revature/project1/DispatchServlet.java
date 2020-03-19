@@ -13,8 +13,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class DispatchServlet extends HttpServlet {
 
@@ -28,12 +26,12 @@ public class DispatchServlet extends HttpServlet {
         if (uriDecon.length >= 3) {
             switch (uriDecon[2]) {
                 case "users":
-                    jsonResponse = UserService.getInstance()
-                                              .processGet(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params);
+                    UserService uService = new UserService();
+                    jsonResponse = uService.processGet(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params);
                     break;
                 case "reimbursements":
-                    jsonResponse = ReimbService.getInstance()
-                                               .processGet(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params);
+                    ReimbService rService = new ReimbService();
+                    jsonResponse = rService.processGet(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params);
                     break;
                 default:
                     response.sendError(404);
@@ -42,7 +40,6 @@ public class DispatchServlet extends HttpServlet {
             response.sendError(404, "Path not found");
         }
         PrintWriter out = response.getWriter();
-        Logger.getGlobal().log(Level.INFO, "DispatchServlet.doGet() is responding with: ".concat(jsonResponse));
         out.println(jsonResponse);
     }
 
@@ -55,18 +52,21 @@ public class DispatchServlet extends HttpServlet {
         if (uriDecon.length >= 3) {
             switch(uriDecon[2]) {
                 case "users":
-                    returnCode = UserService.getInstance().processPost(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params, json);
+                    UserService uService = new UserService();
+                    returnCode = uService.processPost(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params, json);
                     break;
                 case "reimbursements":
-                    java.util.logging.Logger.getGlobal().log(Level.INFO, "DispatchServlet:doPost entering ReimbService with JSON: ".concat(json));
-                    returnCode = ReimbService.getInstance().processPost(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params, json);
+                    ReimbService rService = new ReimbService();
+                    returnCode = rService.processPost(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params, json);
             }
         }
-        response.setStatus(returnCode);
+        if (returnCode == -1)
+            response.sendError(400);
+        else
+            response.setStatus(returnCode);
     }
 
     public void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        Logger.getGlobal().log(Level.INFO, "DispatchServlet:doPut Starting.");
         int returnCode = -1;
         Map<String, String[]> params = request.getParameterMap();
         String[] uriDecon = request.getRequestURI().toLowerCase().split("/");
@@ -75,10 +75,13 @@ public class DispatchServlet extends HttpServlet {
         if (uriDecon.length >= 3) {
             switch (uriDecon[2]) {
                 case "reimbursements":
-                    Logger.getGlobal().log(Level.INFO, "DispatchServet:doPut entereing ReimbService with JSON: ".concat(json));
-                    returnCode = ReimbService.getInstance().processPut(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params, json);
+                    ReimbService service = new ReimbService();
+                    returnCode = service.processPut(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params, json);
             }
         }
-        response.setStatus(returnCode);
+        if (returnCode == -1)
+            response.sendError(400);
+        else
+            response.setStatus(returnCode);
     }
 }
