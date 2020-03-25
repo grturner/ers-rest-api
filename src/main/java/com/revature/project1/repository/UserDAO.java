@@ -12,10 +12,6 @@ public interface UserDAO {
 
     public boolean verifyPassword(String userName, String password);
 
-    //public boolean checkUsername(String userName);
-
-    //public boolean updateUser(User user);
-
     public boolean createUser(User user);
 
     public List<User> getAll();

@@ -11,7 +11,6 @@ import com.revature.project1.repository.ReimbursementDAOImpl;
 import com.revature.project1.repository.UserDAOImpl;
 import com.revature.project1.utility.ConnectionUtility;
 import hthurow.tomcatjndi.TomcatJNDI;
-import netscape.javascript.JSException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -56,12 +55,11 @@ public class ReimbServiceTest {
     @Test
     public void processGetAllTest() {
         String[] uri = { "reimbursements" };
-        Map<String, String[]> params = null;
         List<Reimbursement> reimbList = null;
         int count = 0;
         String sql = "SELECT COUNT(REIMB_ID) FROM ERS_REIMBURSEMENT";
         try (Connection con = ConnectionUtility.getConnection()) {
-            String json = service.processGet(uri, params);
+            String json = service.processGet(uri);
             ObjectMapper mapper = new ObjectMapper();
             reimbList = mapper.readValue(json, new TypeReference<List<Reimbursement>>() {
             });
@@ -81,10 +79,9 @@ public class ReimbServiceTest {
     @Test
     public void processGetTypesTest() {
         String[] uri = { "reimbursements", "types" };
-        Map<String, String[]> params = null;
         List<ReimbursementType> typeList = null;
         try {
-            String json = service.processGet(uri, params);
+            String json = service.processGet(uri);
             ObjectMapper mapper = new ObjectMapper();
             typeList = mapper.readValue(json, new TypeReference<List<ReimbursementType>>(){});
         } catch (JsonProcessingException ex) {
@@ -96,10 +93,9 @@ public class ReimbServiceTest {
     @Test
     public void processGetStatusTest() {
         String[] uri = { "reimbursements", "status" };
-        Map<String, String[]> params = null;
         List<ReimbursementStatus> statusList = null;
         try {
-            String json = service.processGet(uri, params);
+            String json = service.processGet(uri);
             ObjectMapper mapper = new ObjectMapper();
             statusList = mapper.readValue(json, new TypeReference<List<ReimbursementStatus>>() {
             });
@@ -112,12 +108,11 @@ public class ReimbServiceTest {
     @Test
     public void processGetByUserId() {
         String[] uri = { "reimbursements", "141" };
-        Map<String, String[]> params = null;
         List<Reimbursement> reimbList = null;
         String sql = "SELECT COUNT(REIMB_ID) FROM ERS_REIMBURSEMENT WHERE REIMB_AUTHOR = 141";
         int count = 0;
         try (Connection con = ConnectionUtility.getConnection()) {
-            String json = service.processGet(uri, params);
+            String json = service.processGet(uri);
             ObjectMapper mapper = new ObjectMapper();
             reimbList = mapper.readValue(json, new TypeReference<List<Reimbursement>>() {
             });
@@ -145,13 +140,13 @@ public class ReimbServiceTest {
             }
             rs.close();
             stmt.close();
-            String jsonBuilder = service.processGet(new String[]{"", "141"}, null);
+            String jsonBuilder = service.processGet(new String[]{"", "141"});
             ObjectMapper mapper = new ObjectMapper();
             List<Reimbursement> reimbList = mapper.readValue(jsonBuilder, new TypeReference<List<Reimbursement>>() {
             });
             Reimbursement r = reimbList.get(0);
             String jsonPayload = mapper.writeValueAsString(r);
-            service.processPost(new String[]{""}, null, jsonPayload);
+            service.processPost(new String[]{""}, jsonPayload);
             stmt = con.createStatement();
             rs = stmt.executeQuery(sql);
             while (rs.next()) {
@@ -182,7 +177,7 @@ public class ReimbServiceTest {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String json = mapper.writeValueAsString(r);
-            assert(service.processPut(uri, null, json) == 200);
+            assert(service.processPut(uri, json) == 200);
         } catch (JsonProcessingException ex) {
             ex.printStackTrace();
         }
@@ -196,7 +191,7 @@ public class ReimbServiceTest {
         List<Reimbursement> reimbList = null;
         int count = 0;
         try (Connection con = ConnectionUtility.getConnection()){
-            String jsonResponse = service.processGet(uri, null);
+            String jsonResponse = service.processGet(uri);
             ObjectMapper mapper = new ObjectMapper();
             reimbList = mapper.readValue(jsonResponse, new TypeReference<List<Reimbursement>>() {
             });
@@ -221,7 +216,7 @@ public class ReimbServiceTest {
         List<Reimbursement> reimbList = null;
         int count = 0;
         try (Connection con = ConnectionUtility.getConnection()){
-            String jsonResponse = service.processGet(uri, null);
+            String jsonResponse = service.processGet(uri);
             ObjectMapper mapper = new ObjectMapper();
             reimbList = mapper.readValue(jsonResponse, new TypeReference<List<Reimbursement>>() {
             });
@@ -246,7 +241,7 @@ public class ReimbServiceTest {
         List<Reimbursement> reimbList = null;
         int count = 0;
         try (Connection con = ConnectionUtility.getConnection()){
-            String jsonResponse = service.processGet(uri, null);
+            String jsonResponse = service.processGet(uri);
             ObjectMapper mapper = new ObjectMapper();
             reimbList = mapper.readValue(jsonResponse, new TypeReference<List<Reimbursement>>() {
             });

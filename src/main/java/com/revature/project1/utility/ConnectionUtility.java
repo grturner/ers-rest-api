@@ -1,5 +1,8 @@
 package com.revature.project1.utility;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -9,6 +12,11 @@ import java.sql.SQLException;
 
 public class ConnectionUtility {
     private static DataSource dataSource = null;
+    private static Logger logger = LogManager.getLogger(ConnectionUtility.class);
+
+    private ConnectionUtility() {
+        super();
+    }
 
     public static Connection getConnection() throws SQLException {
         try {
@@ -18,10 +26,11 @@ public class ConnectionUtility {
                 String dataResourceName = "jdbc/Project1";
                 dataSource = (DataSource) environmentContext.lookup(dataResourceName);
             }
+            return dataSource.getConnection();
         } catch (NamingException ex) {
-            //TODO logger
+            logger.error(ex);
         }
-        return dataSource.getConnection();
+        return null;
     }
 
     public static void setDataSource(DataSource dataSource) {

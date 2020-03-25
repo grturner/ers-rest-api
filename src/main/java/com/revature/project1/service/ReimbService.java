@@ -7,10 +7,6 @@ import com.revature.project1.model.ReimbursementStatus;
 import com.revature.project1.repository.ReimbursementDAO;
 import com.revature.project1.repository.ReimbursementDAOImpl;
 
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 public class ReimbService {
     private ReimbursementDAO repository;
     private ObjectMapper mapper;
@@ -27,72 +23,86 @@ public class ReimbService {
         this.mapper = new ObjectMapper();
     }
 
-    public String processGet(String[] uri, Map<String, String[]> params) throws JsonProcessingException {
+    public String processGet(String[] uri) throws JsonProcessingException {
         String response = null;
         if (uri.length == 1) {
             response = getAll();
         } else if ( uri.length == 2 ) {
-            if (uri[1].equals("types")) {
-                response = getAllTypes();
-            }
-            if (uri[1].equals("status")) {
-                response = getAllStatus();
-            }
-            if (uri[1].matches("[0-9]+")) {
-                response = getAllByUserId(Integer.parseInt(uri[1]));
-            }
-            if (uri[1].toLowerCase().equals("pending")) {
-                ReimbursementStatus pStatsus = null;
-                for (ReimbursementStatus s : repository.getAllStatus()) {
-                    if (s.getStatus().equals("Pending"))
-                        pStatsus = s;
-                }
-                response = getByStatus(pStatsus);
-            }
-            if (uri[1].toLowerCase().equals("approved")) {
-                ReimbursementStatus aStatus = null;
-                for (ReimbursementStatus s : repository.getAllStatus()) {
-                    if (s.getStatus().equals("Approved"))
-                        aStatus = s;
-                }
-                response = getByStatus(aStatus);
-            }
-            if (uri[1].toLowerCase().equals("denied")) {
-                ReimbursementStatus dStatsus = null;
-                for (ReimbursementStatus s : repository.getAllStatus()) {
-                    if (s.getStatus().equals("Denied"))
-                        dStatsus = s;
-                }
-                response = getByStatus(dStatsus);
-            }
+            response = routeGetLength2(uri);
         }
         return response;
     }
 
-    public int processPost(String[] uri, Map<String, String[]> params, String json) throws JsonProcessingException {
+    public int processPost(String[] uri, String json) throws JsonProcessingException {
         int returnCode = -1;
-        if (uri.length == 1) {
-            if (!(json.equals(""))) {
-                Logger.getGlobal().log(Level.INFO, "ReimbService.processPost(): creating a reimbursement with: ".concat(json));
-                Reimbursement reimb = mapper.readValue(json, Reimbursement.class);
-                 if (repository.createReimbursement(reimb)) {
-                     returnCode = 200;
-                 }
-            }
+        if (uri.length == 1 && !(json.equals(""))) {
+            Reimbursement reimb = mapper.readValue(json, Reimbursement.class);
+             if (repository.createReimbursement(reimb)) {
+                 returnCode = 200;
+             }
         }
         return returnCode;
     }
 
-    public int processPut(String[] uri, Map<String, String[]> params, String json) throws JsonProcessingException {
+    public int processPut(String[] uri, String json) throws JsonProcessingException {
         int returnCode = -1;
-        if (uri.length == 1) {
-            if (!(json.equals(""))) {
-                Reimbursement reimb = mapper.readValue(json, Reimbursement.class);
-                if(repository.updateChange(reimb))
-                    returnCode = 200;
-            }
+        if (uri.length == 1 && !(json.equals(""))) {
+            Reimbursement reimb = mapper.readValue(json, Reimbursement.class);
+            if(repository.updateChange(reimb))
+                returnCode = 200;
         }
         return returnCode;
+    }
+
+    private String routeGetLength2(String[] uri) throws JsonProcessingException {
+        String response = null;
+        switch (uri[1]) {
+            case "types":
+                response = getAllTypes();
+                break;
+            case "status":
+                response = getAllStatus();
+                break;
+            case "pending":
+                response = getAllPending();
+                break;
+            case "denied":
+                response = getAllDenied();
+                break;
+            case "approved":
+                response = getAllApproved();
+                break;
+            default:
+                response = getAllByUserId(Integer.parseInt(uri[1]));
+        }
+        return response;
+    }
+
+    private String getAllApproved() throws JsonProcessingException {
+        ReimbursementStatus aStatus = null;
+        for (ReimbursementStatus s : repository.getAllStatus()) {
+            if (s.getStatus().equals("Approved"))
+                aStatus = s;
+        }
+        return getByStatus(aStatus);
+    }
+
+    private String getAllPending() throws JsonProcessingException {
+        ReimbursementStatus pStatsus = null;
+        for (ReimbursementStatus s : repository.getAllStatus()) {
+            if (s.getStatus().equals("Pending"))
+                pStatsus = s;
+        }
+        return getByStatus(pStatsus);
+    }
+
+    private String getAllDenied() throws JsonProcessingException {
+        ReimbursementStatus dStatsus = null;
+        for (ReimbursementStatus s : repository.getAllStatus()) {
+            if (s.getStatus().equals("Denied"))
+                dStatsus = s;
+        }
+        return getByStatus(dStatsus);
     }
 
     private String getAllTypes() throws JsonProcessingException {

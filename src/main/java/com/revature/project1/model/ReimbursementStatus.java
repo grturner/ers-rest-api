@@ -1,6 +1,9 @@
 package com.revature.project1.model;
 
-public class ReimbursementStatus {
+import java.io.Serializable;
+
+public class ReimbursementStatus implements Serializable {
+    private static final long serialVersionUID = -7728089643754592148L;
     int id;
     String status;
 

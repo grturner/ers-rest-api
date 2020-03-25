@@ -3,8 +3,8 @@ package com.revature.project1.model;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
-
 public class Reimbursement implements Serializable {
+    private static final long serialVersionUID = 5854017514368957171L;
     private int id;
     private double amount;
     private Timestamp timeSubmitted;
@@ -13,66 +13,11 @@ public class Reimbursement implements Serializable {
     private String receipt;
     private User submitter;
     private User resolver;
-    private ReimbursementStatus status;
-    private ReimbursementType type;
+    private transient ReimbursementStatus status;
+    private transient ReimbursementType type;
 
     public Reimbursement() {
         super();
-    }
-
-    public Reimbursement(int id) {
-        super();
-        this.id = id;
-    }
-
-    public Reimbursement(int id, double amount) {
-        this(id);
-        this.amount = amount;
-    }
-
-    public Reimbursement(int id, double amount, Timestamp timeSubmitted) {
-        this(id, amount);
-        this.timeSubmitted = timeSubmitted;
-    }
-
-    public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved) {
-        this(id, amount, timeSubmitted);
-        this.timeResolved = timeResolved;
-    }
-
-    public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved, String description) {
-        this(id, amount, timeSubmitted, timeResolved);
-        this.description = description;
-    }
-
-    public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved, String description,
-                         String receipt){
-        this(id, amount, timeSubmitted, timeResolved, description);
-        this.receipt = receipt;
-    }
-
-    public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved, String description,
-                         String receipt, User submitter) {
-        this(id, amount, timeSubmitted, timeResolved, description, receipt);
-        this.submitter = submitter;
-    }
-
-    public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved, String description,
-                         String receipt, User submitter, User resolver) {
-        this(id, amount, timeSubmitted, timeResolved, description, receipt, submitter);
-        this.resolver = resolver;
-    }
-
-    public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved, String description,
-                         String receipt, User submitter, User resolver, ReimbursementStatus status) {
-        this(id, amount, timeSubmitted, timeResolved, description, receipt, submitter, resolver);
-        this.status = status;
-    }
-
-    public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved, String description,
-                         String receipt, User submitter, User resolver, ReimbursementStatus status, ReimbursementType type) {
-        this(id, amount, timeSubmitted, timeResolved, description, receipt, submitter, resolver, status);
-        this.type = type;
     }
 
     public Reimbursement(double amount, String description, User submitter, ReimbursementType type) {

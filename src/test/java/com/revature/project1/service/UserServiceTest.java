@@ -3,7 +3,6 @@ package com.revature.project1.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.revature.project1.model.Login;
 import com.revature.project1.model.User;
 import com.revature.project1.repository.UserDAOImpl;
 import com.revature.project1.utility.ConnectionUtility;
@@ -56,14 +55,6 @@ public class UserServiceTest {
         }
     }
 
-    @Before
-    public void setUp() throws Exception {
-    }
-
-    @After
-    public void tearDown() throws Exception {
-    }
-
     @Test
     public void constructorTest() {
         UserService us = new UserService(new UserDAOImpl());
@@ -77,7 +68,7 @@ public class UserServiceTest {
         String[] uri = {"users"};
         List<User> userList = new ArrayList<>();
         try (Connection con = ConnectionUtility.getConnection()) {
-            String json = service.processGet(uri, null);
+            String json = service.processGet(uri);
             ObjectMapper mapper = new ObjectMapper();
             userList = mapper.readValue(json, new TypeReference<List<User>>() {
             });
@@ -100,7 +91,7 @@ public class UserServiceTest {
         Map<String, String[]> params = new HashMap<>();
         try {
             ObjectMapper mapper = new ObjectMapper();
-            String json = service.processGet(uri, params);
+            String json = service.processGet(uri);
             User u = mapper.readValue(json, User.class);
             assert(u.getUserId() == 141);
         } catch (JsonProcessingException ex) {
@@ -113,7 +104,7 @@ public class UserServiceTest {
         String[] uri = {"users", "141"};
         try {
             ObjectMapper mapper = new ObjectMapper();
-            String json = service.processGet(uri, null);
+            String json = service.processGet(uri);
             User u = mapper.readValue(json, User.class);
             assert(u.getUserName().equals("grturner"));
         } catch (JsonProcessingException ex) {
@@ -123,23 +114,10 @@ public class UserServiceTest {
 
     @Test
     public void processPutLogin() {
-//        String[] uri = {"users", "jsmith"};
-//        Map<String, String[]> params = new HashMap<>();
-//        String[] param = {"crazypassword"};
-//        params.put("login", param);
-//        try {
-//            ObjectMapper mapper = new ObjectMapper();
-//            String json = service.processGet(uri, params);
-//            Boolean bool = mapper.readValue(json, Boolean.class);
-//            assert(bool);
-//        } catch (JsonProcessingException ex) {
-//            ex.printStackTrace();
-//        }
         String[] uri = {"users", "jsmith"};
         String login = "{\"username\":\"jsmith\",\"password\":\"password\"}";
-        Map<String, String[]> params = new HashMap<>();
         try {
-            assert (service.processPost(uri, params, login).equals("true"));
+            assert (service.processPost(uri, login).equals("true"));
         } catch (JsonProcessingException ex) {
             ex.printStackTrace();
         }
@@ -157,7 +135,7 @@ public class UserServiceTest {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String json = mapper.writeValueAsString(u);
-            assert(service.processPost(uri, null, json).equals("200"));
+            assert(service.processPost(uri, json).equals("200"));
         } catch (JsonProcessingException ex) {
             ex.printStackTrace();
         }

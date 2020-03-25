@@ -7,9 +7,6 @@ import com.revature.project1.model.User;
 import com.revature.project1.repository.UserDAO;
 import com.revature.project1.repository.UserDAOImpl;
 import com.revature.project1.utility.PasswordUtility;
-import org.apache.logging.log4j.LogManager;
-
-import java.util.Map;
 
 public class UserService {
     private UserDAO repository;
@@ -28,7 +25,7 @@ public class UserService {
     }
 
 
-    public String processGet(String[] uri, Map<String, String[]> params) throws JsonProcessingException {
+    public String processGet(String[] uri) throws JsonProcessingException {
         String response = null;
         if (uri.length == 1) {
             response = getAll();
@@ -42,10 +39,10 @@ public class UserService {
         return response;
     }
 
-    public String processPost(String[] uri, Map<String, String[]> params, String json) throws JsonProcessingException {
+    public String processPost(String[] uri, String json) throws JsonProcessingException {
         String returnStr = null;
         if (uri.length == 1) {
-            if (!((json.equals("")))){
+            if (!(json.equals(""))){
                 User u = mapper.readValue(json, User.class);
                 u.setPassword(PasswordUtility.sha512Hash(u.getPassword()));
                 if(repository.createUser(u))
@@ -53,7 +50,6 @@ public class UserService {
             }
         } else if (uri.length == 2) {
             Login login = mapper.readValue(json, Login.class);
-            // returnStr = verifyLogin(login.getUsername(), login.getPassword());
             returnStr = verifyLogin(login.getUsername(), PasswordUtility.sha512Hash(login.getPassword()));
         }
         return returnStr;

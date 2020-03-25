@@ -14,20 +14,24 @@ import java.util.List;
 
 public class ReimbursementDAOImpl implements ReimbursementDAO {
     Logger logger = LogManager.getLogger(ReimbursementDAOImpl.class);
+    private static final String TYPE_ID = "REIMB_TYPE_ID";
+    private static final String STATUS_ID = "REIMB_STATUS_ID";
 
     @Override
     public List<Reimbursement> getAllPending() {
         List<Reimbursement> pendingList = new ArrayList<>();
         String sql = "SELECT * FROM ERS_REIMBURSEMENT WHERE REIMB_STATUS_ID = " +
                 "(SELECT REIMB_STATUS_ID FROM ERS_REIMBURSEMENT_STATUS WHERE REIMB_STATUS = 'Pending')";
+        Statement stmt = null;
+        ResultSet rs = null;
         try (Connection con = ConnectionUtility.getConnection()) {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+            stmt = con.createStatement();
+            rs = stmt.executeQuery(sql);
             pendingList = processResults(rs);
-            rs.close();
-            stmt.close();
         } catch (SQLException | IOException ex) {
             logger.debug("Exception: getAllPending()", ex);
+        } finally {
+            closeResultStmt(stmt, rs);
         }
         return pendingList;
     }
@@ -37,8 +41,9 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
         String sql = "UPDATE ERS_REIMBURSEMENT SET REIMB_AMOUNT = ?, REIMB_SUBMITTED = ?, REIMB_RESOLVED = ?," +
                 "REIMB_DESCRIPTION = ?, REIMB_RECEIPT = ?, REIMB_AUTHOR = ?, REIMB_RESOLVER = ?, REIMB_STATUS_ID = ?," +
                 "REIMB_TYPE_ID = ? WHERE REIMB_ID = ?";
+        PreparedStatement stmt = null;
         try (Connection con = ConnectionUtility.getConnection()) {
-            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt = con.prepareStatement(sql);
             stmt.setDouble(1, r.getAmount());
             stmt.setTimestamp(2, r.getTimeSubmitted());
             if (r.getTimeResolved() == null && r.getResolver() != null) {
@@ -60,12 +65,20 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
             stmt.setInt(9, r.getType().getId());
             stmt.setInt(10, r.getId());
             int result = stmt.executeUpdate();
-            stmt.close();
-            logger.info("Updated Reimbursement with ID: ".concat(String.valueOf(r.getId())));
-            if (result > 0)
+            if (result > 0) {
+                String msg = "Updated Reimbursement with ID: ".concat(String.valueOf(r.getId()));
+                logger.info(msg);
                 return true;
+            }
         } catch (SQLException ex) {
-            logger.debug("Exception: updateChange()", ex);
+            logger.error("Exception: updateChange()", ex);
+        } finally {
+            try {
+                if (stmt != null)
+                    stmt.close();
+            } catch (SQLException ex) {
+                logger.error(ex);
+            }
         }
         return false;
     }
@@ -74,12 +87,14 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
     public List<ReimbursementType> getAllTypes() {
         List<ReimbursementType> typeList = new ArrayList<>();
         String sql = "SELECT * FROM ERS_REIMBURSEMENT_TYPE";
+        Statement stmt = null;
+        ResultSet rs = null;
         try (Connection con = ConnectionUtility.getConnection()) {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+            stmt = con.createStatement();
+            rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 ReimbursementType rt = new ReimbursementType();
-                rt.setId(rs.getInt("REIMB_TYPE_ID"));
+                rt.setId(rs.getInt(TYPE_ID));
                 rt.setType(rs.getString("REIMB_TYPE"));
                 typeList.add(rt);
             }
@@ -87,6 +102,8 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
             rs.close();
         } catch (SQLException ex) {
             logger.debug("Exception: getAllTypes()", ex);
+        } finally {
+            closeResultStmt(stmt, rs);
         }
         return typeList;
     }
@@ -96,8 +113,9 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
         String sql = "INSERT INTO ERS_REIMBURSEMENT(REIMB_AMOUNT, REIMB_SUBMITTED, REIMB_DESCRIPTION, REIMB_AUTHOR, " +
                 "REIMB_TYPE_ID, REIMB_STATUS_ID, REIMB_RECEIPT) VALUES(?, CURRENT_TIMESTAMP, ?, ?, ?, " +
                 "(SELECT REIMB_STATUS_ID FROM ERS_REIMBURSEMENT_STATUS WHERE REIMB_STATUS = 'Pending'), ?)";
+        PreparedStatement stmt = null;
         try (Connection con = ConnectionUtility.getConnection()) {
-            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt = con.prepareStatement(sql);
             stmt.setDouble(1, reimbursement.getAmount());
             stmt.setString(2, reimbursement.getDescription());
             stmt.setInt(3, reimbursement.getSubmitter().getUserId());
@@ -110,12 +128,18 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
                 stmt.setNull(5, Types.BLOB);
             }
             int result = stmt.executeUpdate();
-            stmt.close();
             logger.info("New reimbursement ticket created.");
             if (result > 0)
                 return true;
         } catch (SQLException ex) {
             logger.debug("Exception: createReimbursement()", ex);
+        } finally {
+            try {
+                if (stmt != null)
+                    stmt.close();
+            } catch (SQLException ex) {
+                logger.error(ex);
+            }
         }
         return false;
     }
@@ -124,16 +148,18 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
     public List<ReimbursementStatus> getAllStatus() {
         String sql = "SELECT * FROM ERS_REIMBURSEMENT_STATUS";
         List<ReimbursementStatus> statusList = new ArrayList<>();
+        Statement stmt = null;
+        ResultSet rs = null;
         try (Connection con = ConnectionUtility.getConnection()) {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+            stmt = con.createStatement();
+            rs = stmt.executeQuery(sql);
             while (rs.next()) {
-                statusList.add(new ReimbursementStatus(rs.getInt("REIMB_STATUS_ID"), rs.getString("REIMB_STATUS")));
+                statusList.add(new ReimbursementStatus(rs.getInt(STATUS_ID), rs.getString("REIMB_STATUS")));
             }
-            stmt.close();
-            rs.close();
         } catch (SQLException ex) {
             logger.debug("Exception: getAllStatus", ex);
+        } finally {
+            closeResultStmt(stmt, rs);
         }
         return statusList;
     }
@@ -142,15 +168,17 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
     public List<Reimbursement> getAllByUserId(int userId) {
         String sql = "SELECT * FROM ERS_REIMBURSEMENT WHERE REIMB_AUTHOR = ?";
         List<Reimbursement> reimbList = new ArrayList<>();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
         try (Connection con = ConnectionUtility.getConnection()) {
-            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt = con.prepareStatement(sql);
             stmt.setInt(1, userId);
-            ResultSet rs = stmt.executeQuery();
+            rs = stmt.executeQuery();
             reimbList = processResults(rs);
-            stmt.close();
-            rs.close();
         } catch (SQLException | IOException ex) {
             logger.debug("Exception: getAllByUserId()", ex);
+        } finally {
+            closeResultStmt(stmt, rs);
         }
         return reimbList;
     }
@@ -159,34 +187,55 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
     public List<Reimbursement> getAll() {
         String sql = "SELECT * FROM ERS_REIMBURSEMENT";
         List<Reimbursement> reimbList = new ArrayList<>();
+        Statement stmt = null;
+        ResultSet rs = null;
         try (Connection con = ConnectionUtility.getConnection()) {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+            stmt = con.createStatement();
+            rs = stmt.executeQuery(sql);
             reimbList = processResults(rs);
             stmt.close();
             rs.close();
         } catch (SQLException | IOException ex) {
             logger.debug("Exception: getAll()", ex);
+        } finally {
+            closeResultStmt(stmt, rs);
         }
         return reimbList;
     }
 
     @Override
     public List<Reimbursement> getByStatus(ReimbursementStatus status) {
-        UserDAOImpl userDao = new UserDAOImpl();
         List<Reimbursement> reimbList = new ArrayList<>();
         String sql = "SELECT * FROM ERS_REIMBURSEMENT WHERE REIMB_STATUS_ID = ?";
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
         try (Connection con = ConnectionUtility.getConnection()) {
-            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt = con.prepareStatement(sql);
             stmt.setInt(1, status.getId());
-            ResultSet rs =  stmt.executeQuery();
+            rs =  stmt.executeQuery();
             reimbList = processResults(rs);
-            rs.close();
-            stmt.close();
         } catch (SQLException | IOException ex) {
             logger.debug("Exception: getByStatus()", ex);
+        } finally {
+            closeResultStmt(stmt, rs);
         }
         return reimbList;
+    }
+
+    private void closeResultStmt(Statement stmt, ResultSet rs) {
+        try {
+            if (rs != null)
+                rs.close();
+        } catch (SQLException ex) {
+            logger.error(ex);
+        } finally {
+            try {
+                if (stmt != null)
+                    stmt.close();
+            } catch (SQLException ex) {
+                logger.error(ex);
+            }
+        }
     }
 
     private List<Reimbursement> processResults(ResultSet rs) throws SQLException, IOException {
@@ -216,8 +265,8 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
                 r.setResolver(null);
             else
                 r.setResolver(userDAO.getById(resolverId));
-            r.setStatus(this.getStatusByID(rs.getInt("REIMB_STATUS_ID")));
-            r.setType(this.getTypeByID(rs.getInt("REIMB_TYPE_ID")));
+            r.setStatus(this.getStatusByID(rs.getInt(STATUS_ID)));
+            r.setType(this.getTypeByID(rs.getInt(TYPE_ID)));
             reimbList.add(r);
         }
         return reimbList;
@@ -226,18 +275,20 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
     private ReimbursementStatus getStatusByID(int id) {
         ReimbursementStatus status = new ReimbursementStatus();
         String sql = "SELECT * FROM ERS_REIMBURSEMENT_STATUS WHERE REIMB_STATUS_ID = ?";
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
         try (Connection con = ConnectionUtility.getConnection()) {
-            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt = con.prepareStatement(sql);
             stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
+            rs = stmt.executeQuery();
             while (rs.next()) {
-                status.setId(rs.getInt("REIMB_STATUS_ID"));
+                status.setId(rs.getInt(STATUS_ID));
                 status.setStatus(rs.getString("REIMB_STATUS"));
             }
-            stmt.close();
-            rs.close();
         } catch (SQLException ex) {
             logger.debug("Exception: getStatusById()", ex);
+        } finally {
+            closeResultStmt(stmt, rs);
         }
         return status;
     }
@@ -245,18 +296,20 @@ public class ReimbursementDAOImpl implements ReimbursementDAO {
     private ReimbursementType getTypeByID(int id) {
         ReimbursementType type = new ReimbursementType();
         String sql = "SELECT * FROM ERS_REIMBURSEMENT_TYPE WHERE REIMB_TYPE_ID = ?";
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
         try (Connection con = ConnectionUtility.getConnection()) {
-            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt = con.prepareStatement(sql);
             stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
+            rs = stmt.executeQuery();
             while(rs.next()) {
-                type.setId(rs.getInt("REIMB_TYPE_ID"));
+                type.setId(rs.getInt(TYPE_ID));
                 type.setType(rs.getString("REIMB_TYPE"));
             }
-            stmt.close();
-            rs.close();
         } catch (SQLException ex) {
             logger.debug("Exception: getTypeById:()", ex);
+        } finally {
+            closeResultStmt(stmt, rs);
         }
         return type;
     }
