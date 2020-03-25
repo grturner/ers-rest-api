@@ -1,8 +1,8 @@
 package com.revature.project1.model;
 
 import java.io.Serializable;
-import java.sql.Blob;
 import java.sql.Timestamp;
+
 
 public class Reimbursement implements Serializable {
     private int id;
@@ -10,7 +10,7 @@ public class Reimbursement implements Serializable {
     private Timestamp timeSubmitted;
     private Timestamp timeResolved;
     private String description;
-    private Blob receipt;
+    private String receipt;
     private User submitter;
     private User resolver;
     private ReimbursementStatus status;
@@ -46,31 +46,31 @@ public class Reimbursement implements Serializable {
     }
 
     public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved, String description,
-                         Blob receipt){
+                         String receipt){
         this(id, amount, timeSubmitted, timeResolved, description);
         this.receipt = receipt;
     }
 
     public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved, String description,
-                         Blob receipt, User submitter) {
+                         String receipt, User submitter) {
         this(id, amount, timeSubmitted, timeResolved, description, receipt);
         this.submitter = submitter;
     }
 
     public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved, String description,
-                         Blob receipt, User submitter, User resolver) {
+                         String receipt, User submitter, User resolver) {
         this(id, amount, timeSubmitted, timeResolved, description, receipt, submitter);
         this.resolver = resolver;
     }
 
     public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved, String description,
-                              Blob receipt, User submitter, User resolver, ReimbursementStatus status) {
+                         String receipt, User submitter, User resolver, ReimbursementStatus status) {
         this(id, amount, timeSubmitted, timeResolved, description, receipt, submitter, resolver);
         this.status = status;
     }
 
     public Reimbursement(int id, double amount, Timestamp timeSubmitted, Timestamp timeResolved, String description,
-                         Blob receipt, User submitter, User resolver, ReimbursementStatus status, ReimbursementType type) {
+                         String receipt, User submitter, User resolver, ReimbursementStatus status, ReimbursementType type) {
         this(id, amount, timeSubmitted, timeResolved, description, receipt, submitter, resolver, status);
         this.type = type;
     }
@@ -122,11 +122,11 @@ public class Reimbursement implements Serializable {
         this.description = description;
     }
 
-    public Blob getReceipt() {
+    public String getReceipt() {
         return receipt;
     }
 
-    public void setReceipt(Blob receipt) {
+    public void setReceipt(String receipt) {
         this.receipt = receipt;
     }
 

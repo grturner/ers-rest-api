@@ -2,12 +2,16 @@ package com.revature.project1.repository;
 
 import com.revature.project1.model.User;
 import com.revature.project1.utility.ConnectionUtility;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserDAOImpl implements UserDAO {
+    Logger logger = LogManager.getLogger(UserDAOImpl.class);
+
     @Override
     public User getUser(String userName) {
         String sql = "SELECT * FROM ERS_USERS JOIN ERS_USER_ROLES EUR on ERS_USERS.USER_ROLE_ID = EUR.ERS_USER_ROLE " +
@@ -18,8 +22,10 @@ public class UserDAOImpl implements UserDAO {
             stmt.setString(1, userName);
             ResultSet rs = stmt.executeQuery();
             userList = parseUsers(rs);
+            stmt.close();
+            rs.close();
         } catch (SQLException ex) {
-            //TODO logging
+            logger.debug("Exception: getUser()", ex);
         }
         if (userList.size() == 1)
             return userList.get(0);
@@ -37,8 +43,10 @@ public class UserDAOImpl implements UserDAO {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             userList = parseUsers(rs);
+            stmt.close();
+            rs.close();
         } catch (SQLException ex) {
-            //TODO logging
+            logger.debug("Exception: getById()", ex);
         }
         if (userList.size() == 1) {
             return userList.get(0);
@@ -58,23 +66,23 @@ public class UserDAOImpl implements UserDAO {
                 if (password.equals(rs.getString("ERS_PASSWORD")))
                     counter++;
             }
+            stmt.close();
+            rs.close();
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.debug("Exception: verifyPassword()", ex);
         }
-        if (counter > 0 )
-            return true;
-        return false;
+        return counter > 0;
     }
 
-    @Override
-    public boolean checkUsername(String userName) {
-        return false;
-    }
+    //@Override
+    //public boolean checkUsername(String userName) {
+    //    return false;
+    //}
 
-    @Override
-    public boolean updateUser(User user) {
-        return false;
-    }
+    //@Override
+    //public boolean updateUser(User user) {
+    //    return false;
+    //}
 
     @Override
     public boolean createUser(User user) {
@@ -88,10 +96,13 @@ public class UserDAOImpl implements UserDAO {
             stmt.setString(4, user.getLastName());
             stmt.setString(5, user.getEmail());
             stmt.setInt(6, 1);
-            if (stmt.executeUpdate() > 0)
+            int res = stmt.executeUpdate();
+            stmt.close();
+            logger.info("User has registered: ".concat(user.getUserName()) );
+            if (res > 0)
                 return true;
         } catch (SQLException ex) {
-            //TODO logging
+            logger.debug("Exception: createUser()", ex);
         }
         return false;
     }
@@ -104,8 +115,10 @@ public class UserDAOImpl implements UserDAO {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(sql);
             userList = parseUsers(rs);
+            stmt.close();
+            rs.close();
         } catch (SQLException ex) {
-            //TODO logging
+            logger.debug("Exception: getAll()", ex);
         }
         return userList;
     }

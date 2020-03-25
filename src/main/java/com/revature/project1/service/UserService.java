@@ -2,9 +2,13 @@ package com.revature.project1.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.revature.project1.model.Login;
 import com.revature.project1.model.User;
 import com.revature.project1.repository.UserDAO;
 import com.revature.project1.repository.UserDAOImpl;
+import com.revature.project1.utility.PasswordUtility;
+import org.apache.logging.log4j.LogManager;
+
 import java.util.Map;
 
 public class UserService {
@@ -32,27 +36,27 @@ public class UserService {
             if (uri[1].matches("[0-9]+"))
                 response = getById(Integer.parseInt(uri[1]));
             else {
-                if (params.containsKey("login")) {
-                    response = verifyLogin(uri[1], params.get("login")[0]);
-                } else {
-                    response = getByUsername(uri[1]);
-                }
+                response = getByUsername(uri[1]);
             }
-
         }
         return response;
     }
 
-    public int processPost(String[] uri, Map<String, String[]> params, String json) throws JsonProcessingException {
-        int returnCode = -1;
+    public String processPost(String[] uri, Map<String, String[]> params, String json) throws JsonProcessingException {
+        String returnStr = null;
         if (uri.length == 1) {
             if (!((json.equals("")))){
                 User u = mapper.readValue(json, User.class);
+                u.setPassword(PasswordUtility.sha512Hash(u.getPassword()));
                 if(repository.createUser(u))
-                    returnCode = 200;
+                    returnStr = "200";
             }
+        } else if (uri.length == 2) {
+            Login login = mapper.readValue(json, Login.class);
+            // returnStr = verifyLogin(login.getUsername(), login.getPassword());
+            returnStr = verifyLogin(login.getUsername(), PasswordUtility.sha512Hash(login.getPassword()));
         }
-        return returnCode;
+        return returnStr;
     }
 
     private String getAll() throws JsonProcessingException {

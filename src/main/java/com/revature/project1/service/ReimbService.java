@@ -3,6 +3,7 @@ package com.revature.project1.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.revature.project1.model.Reimbursement;
+import com.revature.project1.model.ReimbursementStatus;
 import com.revature.project1.repository.ReimbursementDAO;
 import com.revature.project1.repository.ReimbursementDAOImpl;
 
@@ -40,6 +41,30 @@ public class ReimbService {
             if (uri[1].matches("[0-9]+")) {
                 response = getAllByUserId(Integer.parseInt(uri[1]));
             }
+            if (uri[1].toLowerCase().equals("pending")) {
+                ReimbursementStatus pStatsus = null;
+                for (ReimbursementStatus s : repository.getAllStatus()) {
+                    if (s.getStatus().equals("Pending"))
+                        pStatsus = s;
+                }
+                response = getByStatus(pStatsus);
+            }
+            if (uri[1].toLowerCase().equals("approved")) {
+                ReimbursementStatus aStatus = null;
+                for (ReimbursementStatus s : repository.getAllStatus()) {
+                    if (s.getStatus().equals("Approved"))
+                        aStatus = s;
+                }
+                response = getByStatus(aStatus);
+            }
+            if (uri[1].toLowerCase().equals("denied")) {
+                ReimbursementStatus dStatsus = null;
+                for (ReimbursementStatus s : repository.getAllStatus()) {
+                    if (s.getStatus().equals("Denied"))
+                        dStatsus = s;
+                }
+                response = getByStatus(dStatsus);
+            }
         }
         return response;
     }
@@ -48,6 +73,7 @@ public class ReimbService {
         int returnCode = -1;
         if (uri.length == 1) {
             if (!(json.equals(""))) {
+                Logger.getGlobal().log(Level.INFO, "ReimbService.processPost(): creating a reimbursement with: ".concat(json));
                 Reimbursement reimb = mapper.readValue(json, Reimbursement.class);
                  if (repository.createReimbursement(reimb)) {
                      returnCode = 200;
@@ -78,11 +104,14 @@ public class ReimbService {
     }
 
     private String getAllByUserId(int i) throws JsonProcessingException {
-        Logger.getGlobal().log(Level.INFO, "Entering ReimbService.getAllByUserBytes()");
         return mapper.writeValueAsString(repository.getAllByUserId(i));
     }
 
     private String getAll() throws JsonProcessingException {
         return mapper.writeValueAsString(repository.getAll());
+    }
+
+    private String getByStatus(ReimbursementStatus status) throws JsonProcessingException {
+        return mapper.writeValueAsString(repository.getByStatus(status));
     }
 }

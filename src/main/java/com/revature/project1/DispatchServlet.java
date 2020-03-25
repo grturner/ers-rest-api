@@ -13,12 +13,13 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DispatchServlet extends HttpServlet {
 
-    public void init() {}
-
-    public void doGet(HttpServletRequest request, HttpServletResponse response)
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         Map<String, String[]> params = request.getParameterMap();
         String[] uriDecon = request.getRequestURI().toLowerCase().split("/");
@@ -43,35 +44,50 @@ public class DispatchServlet extends HttpServlet {
         out.println(jsonResponse);
     }
 
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         Map<String, String[]> params = request.getParameterMap();
         String[] uriDecon = request.getRequestURI().toLowerCase().split("/");
         BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream()));
         String json = br.readLine();
+        br.close();
         int returnCode = -1;
+        String returnStr = "";
         if (uriDecon.length >= 3) {
             switch(uriDecon[2]) {
                 case "users":
                     UserService uService = new UserService();
-                    returnCode = uService.processPost(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params, json);
+                    returnStr = uService.processPost(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params, json);
+                    if ( returnStr != null) {
+                        if (returnStr.equals("200")) {
+                            returnCode = 200;
+                        } else {
+                            returnCode = 200;
+                            PrintWriter out = response.getWriter();
+                            out.println(returnStr);
+                        }
+                    }
                     break;
                 case "reimbursements":
+                    Logger.getGlobal().log(Level.INFO,"DispatchServlet.doPost() entering reimbursement service");
                     ReimbService rService = new ReimbService();
                     returnCode = rService.processPost(Arrays.copyOfRange(uriDecon, 2, uriDecon.length), params, json);
             }
         }
         if (returnCode == -1)
-            response.sendError(400);
+            response.sendError(404);
         else
             response.setStatus(returnCode);
     }
 
-    public void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    @Override
+    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         int returnCode = -1;
         Map<String, String[]> params = request.getParameterMap();
         String[] uriDecon = request.getRequestURI().toLowerCase().split("/");
         BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream()));
         String json = br.readLine();
+        br.close();
         if (uriDecon.length >= 3) {
             switch (uriDecon[2]) {
                 case "reimbursements":
